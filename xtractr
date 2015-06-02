@@ -1,0 +1,87 @@
+#!/usr/bin/env php
+<?php
+namespace xtractr;
+class xtractrError extends \Exception{}
+class xtractr{
+  const DEFAULT_USER_AGENT='Mozilla/5.0 (compatible; Googlebot/2.1;  http://www.google.com/bot.html)';
+  protected $filename=null;
+  protected $config=null;
+  protected $context=null;
+  protected $user_agent=null;
+  protected function prepareStreamContext(){
+    $o=[
+      'http'=>[
+        'method'=>'GET',
+        'header'=>"User-Agent: {$this->user_agent}\r\n"
+      ]
+    ];
+    $this->context=stream_context_create($o);
+  }
+  protected function initialize(){
+    if(($html=file_get_contents($this->filename))===false){
+      throw new xtractrError('file_get_contents() failed');
+    }
+    if(($this->config=json_decode($html))===null){
+      throw new xtractrError(sprintf("# json_last_error=%s\n",(string)json_json_last_error()));
+    }
+    $this->prepareStreamContext();
+  }
+  protected function validateValue($result,$value){
+    if(!isset($value->verify)||empty($value->verify)){
+      return true;
+    }
+    return (bool)preg_match($value->verify,$result);
+  }
+  protected function processValue(\stdClass $value){
+    $result=null;
+    if(($html=file_get_contents($value->source->url,false,$this->context))===false){
+      throw new xtractrError('file_get_contents() failed');
+    }
+    $doc=new \DOMDocument();
+    if(@$doc->loadHTML($html)===false){
+      throw new xtractrError('DOMDocument::loadHTML() failed');
+    }
+    $xp=new \DOMXPath($doc);
+    $xq=base64_decode($value->source->xpath);
+    $nodeList=$xp->evaluate($xq);
+    if($nodeList->length==0){
+      throw new xtractrError('DOMXPath::query() return empty nodeList');
+    }elseif($nodeList->length>=1){
+      $node=$nodeList->item(0);
+      $result=(string)$node->textContent;
+    }
+    return $this->validateValue($result,$value)?$result:null;
+  }
+  public function __construct($filename,$user_agent=null){
+    $this->filename=(string)$filename;
+    $this->user_agent=(string)(is_null($user_agent)?xtractr::DEFAULT_USER_AGENT:$user_agent);
+    $this->initialize();
+  }
+  public function __destruct(){
+    foreach($this as $k=>$v){
+      if(!is_null($this->{$k})){
+        $this->{$k}=(unset)$this->{$k};
+      }
+    }
+  }
+  public function __invoke(){
+    $result=[];
+    foreach($this->config as $value){
+      try{
+        $result[$value->id]=$this->processValue($value);
+      }catch(xtractrError $e){
+        printf("# xtractrError:\n  + %s\n",$e->getMessage());
+      }
+    }
+    return $result;
+  }
+}
+if(empty($argv[1])){
+  printf("usage:\n  %s <config.json>\n",$argv[0]);
+  exit(1);
+}
+$xtr=new xtractr($argv[1]);
+$vset=$xtr();
+$json=json_encode($vset);
+echo $json;
+exit(0);

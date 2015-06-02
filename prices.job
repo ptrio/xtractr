@@ -1,0 +1,13 @@
+#!/bin/bash
+_mongoJS(){
+  local t='/code/cm/xtractr/prices.xtr';
+  local c='$r=[];foreach(json_decode(file_get_contents("php://stdin"))as$k=>$v){$r[]=(object)["_id"=>hash("ripemd160",uniqid("",true)),"name"=>$k,"value"=>$v,"unixtime"=>microtime(true)];}printf("%s",json_encode($r));'
+  local j=$(/code/cm/xtractr/xtractr "${t}" | "$(which php)" -r "${c}");
+  echo -n "db.prices.insert(${j});";
+}
+declare -x _mongo='127.0.0.1:40866/etl';
+declare -x _js="$(_mongoJS)";
+"$(which mongo)" "${_mongo}" >/dev/null 2>&1 <<WTF
+${_js}
+WTF
+exit $?;

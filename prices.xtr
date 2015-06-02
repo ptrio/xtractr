@@ -1,0 +1,18 @@
+[
+  {
+    "id": "al_finanzen_net",
+    "source": {
+      "url": "http://www.finanzen.net/rohstoffe/aluminiumpreis",
+      "xpath": "Ly8qW0BpZD0ibWFpbldyYXBwZXIiXS9kaXZbMl0vZGl2WzFdL2RpdlsyXS90YWJsZS90ci90ZFsxXS90ZXh0KCk=",
+      "verify": "Ii9bMC05XXsxLH1cLlswLTldezEsfVwsWzAtOV17MSwyfS8i"
+    }
+  },
+  {
+    "id": "cu_finanzen_net",
+    "source": {
+      "url": "http://www.finanzen.net/rohstoffe/kupferpreis",
+      "xpath": "Ly8qW0BpZD0ibWFpbldyYXBwZXIiXS9kaXZbMl0vZGl2WzFdL2RpdlsyXS90YWJsZS90ci90ZFsxXS90ZXh0KCk=",
+      "verify": "Ii9bMC05XXsxLH1cLlswLTldezEsfVwsWzAtOV17MSwyfS8i"
+    }
+  }
+]
